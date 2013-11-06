@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+
+<head>
+	<script type="text/javascript" src="jszip.js"></script>
+</head>
+
+<body>
+	<div style="width:100%">
+		<input type="file" id="src-file" style="width:100%">
+	</div>
+	<div id="result" style="width:100%;">
+		<img id="src-img" style="float:left;"/>
+	</div>
+	<script>
+	
+	function add_image_resized(size, name, zip)
+	{
+		var canvas=document.createElement("canvas");
+		var ctx=canvas.getContext("2d");
+		ctx.canvas.width=size;
+		ctx.canvas.height=size;
+		var img=document.getElementById("src-img");
+		ctx.drawImage(img,0,0,size,size);
+		
+		var dataURL = canvas.toDataURL();
+		
+		var element = document.createElement('div');
+		element.style.float='left';
+		element.style.margin='5px';
+		element.innerHTML = '<img src='+dataURL+"><br>"+size+'x'+size+'';
+		
+		document.getElementById('result').appendChild(element);
+		
+		var data = dataURL.replace("data:image/png;base64","");
+		zip.file(name, data, {base64: true});
+	};
+		
+	function load_image(file) {
+		reader = new FileReader();
+		reader.readAsDataURL(file);
+		reader.onload = function (event) {
+		    document.getElementById("src-img").src = event.target.result;
+		
+		    var zip = new JSZip();
+		
+			var sizes = [12,16,56,72,110,176];
+			sizes.forEach(function(size) {
+				var name = ""+size+"x"+size+".png";
+				add_image_resized(size, name, zip);
+			});
+			var content = zip.generate();
+//			location.href="data:application/zip;base64,"+content;
+		  };
+	};
+	
+	var target = document.getElementById("src-file");
+	target.addEventListener("change", function(event) {
+
+	    load_image(target.files[0]);
+
+	}, false);
+
+
+	target.addEventListener("dragover", function(event) {
+	    event.preventDefault();
+	}, false);
+
+	target.addEventListener("drop", function(event) {
+
+	    // cancel default actions
+	    event.preventDefault();
+
+	    load_image(event.dataTransfer.files[0]);
+
+	}, false);
+	</script>
+</body>
