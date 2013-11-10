@@ -1,17 +1,61 @@
 <!DOCTYPE html>
 
 <head>
+	<title>Easy App Icons</title>
 	<script type="text/javascript" src="jszip.js"></script>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 
 <body>
-	<div style="width:100%">
-		<input type="file" id="src-file" style="width:100%">
-	</div>
-	<div id="result" style="width:100%;">
-		<img id="src-img" style="float:left;"/>
-	</div>
+		<div style="width:100%;text-align:center;">
+			<div>
+				Easy App Icons
+			</div>
+		</div>
+		<div>
+			<span>
+				1.
+				<!-- File select -->
+				<input type="file" id="src-file">
+			</span>
+			<span>&rarr;</span>
+			<span>				
+				2. Select target:
+				<select id="target_select">
+				</select>
+			</span>				
+			<span>&rarr;</span>
+			<span>
+				3.
+				<button id="download_button" type="button" style="color:blue;" onclick="download_button_pressed();">Download</button>
+			</span>
+		</div>
+		
+		<hr>
+		
+		<div id="result" style="width:100%;">
+		</div>
+
 	<script>
+	
+	var targets={
+		iOS:[
+			{name:"AppIconPhone.png",size:57},
+			{name:"AppIconPhone@2x.png",size:114},
+			{name:"AppIconPad.png",size:72},
+			{name:"AppIconPad@2x.png",size:144},
+			{name:"SpotlightIcon.png",size:29},
+			{name:"SpotlightIcon@2x.png",size:58},
+			{name:"SpotlightIconPad.png",size:48},
+			{name:"SpotlightIconPad@2x.png",size:96},
+			
+			{name:"AppIconiOS7Phone@2x.png",size:120},
+			{name:"AppIconiOS7Pad.png",size:76},
+			{name:"AppIconiOS7Pad@2x.png",size:152},
+			{name:"SpotlightIconiOS7.png",size:40},
+			{name:"SpotlightIconiOS7@2x.png",size:80},
+		]
+	};
 	
 	function add_image_resized(size, name, zip)
 	{
@@ -34,44 +78,80 @@
 		var data = dataURL.replace("data:image/png;base64","");
 		zip.file(name, data, {base64: true});
 	};
+	
+	var content = undefined;
 		
-	function load_image(file) {
+	function process_image(file) {
+		content = undefined;
+		update_download_button();
 		reader = new FileReader();
+		document.getElementById('result').innerHTML = '<img id="src-img" style="float:left;"/>';
+		
+		var target = document.getElementById("target_select").value;
+		
+		var resolutions = targets[target];
+		
 		reader.readAsDataURL(file);
 		reader.onload = function (event) {
 		    document.getElementById("src-img").src = event.target.result;
 		
 		    var zip = new JSZip();
 		
-			var sizes = [12,16,56,72,110,176];
-			sizes.forEach(function(size) {
-				var name = ""+size+"x"+size+".png";
-				add_image_resized(size, name, zip);
+			resolutions.forEach(function(resolution) {
+				add_image_resized(resolution.size, resolution.name, zip);
 			});
-			var content = zip.generate();
-//			location.href="data:application/zip;base64,"+content;
+			content = zip.generate();
+			update_download_button();
 		  };
 	};
 	
-	var target = document.getElementById("src-file");
-	target.addEventListener("change", function(event) {
-
-	    load_image(target.files[0]);
+	
+	function update_download_button() {
+		var button = document.getElementById("download_button");
+		if (content)
+		{
+			button.disabled=false;
+		} else {
+			button.disabled=true;
+		}
+	};
+	
+	function download_button_pressed() {
+		if (content)
+		{
+			location.href="data:application/zip;base64,"+content;
+		}
+	};
+	
+	// Add event listeners
+	
+	var file_picker = document.getElementById("src-file");
+	file_picker.addEventListener("change", function(event) {
+	    process_image(file_picker.files[0]);
 
 	}, false);
 
-
-	target.addEventListener("dragover", function(event) {
+	file_picker.addEventListener("dragover", function(event) {
 	    event.preventDefault();
 	}, false);
 
-	target.addEventListener("drop", function(event) {
+	file_picker.addEventListener("drop", function(event) {
 
 	    // cancel default actions
 	    event.preventDefault();
 
-	    load_image(event.dataTransfer.files[0]);
+	    process_image(event.dataTransfer.files[0]);
 
 	}, false);
+	
+	// Setup
+	var target_select = document.getElementById("target_select");
+	for (var target in targets)
+	{
+		var option=document.createElement("option");
+		option.text=target;
+		target_select.add(option, null);
+	};
+	update_download_button();
 	</script>
 </body>
