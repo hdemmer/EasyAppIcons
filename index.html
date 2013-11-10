@@ -21,7 +21,7 @@
 			<span>&rarr;</span>
 			<span>				
 				2. Select target:
-				<select id="target_select">
+				<select id="target_select" onchange="process_image();">
 				</select>
 			</span>				
 			<span>&rarr;</span>
@@ -54,11 +54,22 @@
 			{name:"AppIconiOS7Pad@2x.png",size:152},
 			{name:"SpotlightIconiOS7.png",size:40},
 			{name:"SpotlightIconiOS7@2x.png",size:80},
+		],
+		Android:[
+			{folder:"ldpi",name:"ic.png",size:36},
+			{folder:"mdpi",name:"ic.png",size:48},
+			{folder:"hdpi",name:"ic.png",size:72},
+			{folder:"xhdpi",name:"ic.png",size:96},
+			{folder:"xxhdpi",name:"ic.png",size:144}			
 		]
 	};
 	
-	function add_image_resized(size, name, zip)
+	function add_image_resized(resolution_info, zip)
 	{
+		var size = resolution_info.size;
+		var name = resolution_info.name;
+		var folder = resolution_info.folder;
+		
 		var canvas=document.createElement("canvas");
 		var ctx=canvas.getContext("2d");
 		ctx.canvas.width=size;
@@ -76,33 +87,41 @@
 		document.getElementById('result').appendChild(element);
 		
 		var data = dataURL.replace("data:image/png;base64","");
+		if (folder)
+		{
+			zip = zip.folder(folder);
+		}
 		zip.file(name, data, {base64: true});
 	};
 	
+	var file = undefined;
 	var content = undefined;
 		
-	function process_image(file) {
-		content = undefined;
-		update_download_button();
-		reader = new FileReader();
-		document.getElementById('result').innerHTML = '<img id="src-img" style="float:left;"/>';
-		
-		var target = document.getElementById("target_select").value;
-		
-		var resolutions = targets[target];
-		
-		reader.readAsDataURL(file);
-		reader.onload = function (event) {
-		    document.getElementById("src-img").src = event.target.result;
-		
-		    var zip = new JSZip();
-		
-			resolutions.forEach(function(resolution) {
-				add_image_resized(resolution.size, resolution.name, zip);
-			});
-			content = zip.generate();
+	function process_image() {
+		if (file)
+		{
+			content = undefined;
 			update_download_button();
-		  };
+			reader = new FileReader();
+			document.getElementById('result').innerHTML = '<img id="src-img" style="float:left;"/>';
+
+			var target = document.getElementById("target_select").value;
+
+			var resolutions = targets[target];
+
+			reader.readAsDataURL(file);
+			reader.onload = function (event) {
+				document.getElementById("src-img").src = event.target.result;
+
+				var zip = new JSZip();
+
+				resolutions.forEach(function(resolution_info) {
+					add_image_resized(resolution_info, zip);
+				});
+				content = zip.generate();
+				update_download_button();
+			};
+		}
 	};
 	
 	
@@ -127,7 +146,8 @@
 	
 	var file_picker = document.getElementById("src-file");
 	file_picker.addEventListener("change", function(event) {
-	    process_image(file_picker.files[0]);
+		file = file_picker.files[0];
+	    process_image();
 
 	}, false);
 
@@ -140,12 +160,15 @@
 	    // cancel default actions
 	    event.preventDefault();
 
-	    process_image(event.dataTransfer.files[0]);
+		file = event.dataTransfer.files[0];
+	    process_image();
 
 	}, false);
 	
-	// Setup
 	var target_select = document.getElementById("target_select");
+
+	// Setup
+
 	for (var target in targets)
 	{
 		var option=document.createElement("option");
