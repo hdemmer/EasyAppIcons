@@ -1,3 +1,5 @@
+# This project is archived. There are by now much better ways to do this.
+
 EasyAppIcons
 ============
 
